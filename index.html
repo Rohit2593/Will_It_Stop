@@ -1,0 +1,196 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Number Visualization</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+    }
+
+    .container {
+      max-width: 600px;
+      margin: 0 auto;
+      padding: 20px;
+    }
+
+    button {
+      margin-top: 20px;
+      padding: 10px 20px;
+      font-size: 16px;
+      background-color: #4287f5;
+      color: #fff;
+      border: none;
+      cursor: pointer;
+    }
+
+    pre {
+      background-color: #f5f5f5;
+      padding: 10px;
+    }
+
+    .highlight {
+      background-color: #ff0000;
+    }
+
+    #output {
+      white-space: nowrap;
+      overflow-x: auto;
+    }
+
+    #output p {
+      display: inline-block;
+      padding: 5px;
+    }
+
+    #status {
+      margin-top: 20px;
+    }
+
+    #copyButton {
+      margin-top: 0px;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h1>Will it stop?</h1>
+    <div>
+      <label for="inputNumber">Enter a number (between 1 to 100 ):</label>
+      <input type="number" id="inputNumber" min="1" step="1">
+    </div>
+    <button onclick="startVisualization()">Start Visualization</button>
+    <button onclick="stopVisualization()">Stop Visualization</button>
+    <pre id="code">
+      While n > 1 do
+        If n mod 2 = 0 then:
+          n := n / 2
+        Else:
+          n := 3 * n + 3
+    </pre>
+    <div id="currentNumberHolder"></div>
+    <div id="output"></div>
+    <button id="copyButton" onclick="copyToClipboard()">Copy Output</button>
+    <div id="status"></div>
+  </div>
+
+  <script>
+    let stop = false; // Flag to indicate if visualization should stop
+
+    function copyToClipboard() {
+      const copyButton = document.getElementById('copyButton');
+      const sequence = copyButton.dataset.sequence;
+
+      if (!sequence) return; // No sequence available
+
+      navigator.clipboard.writeText(sequence)
+        .then(() => {
+          copyButton.textContent = 'Copied!';
+          setTimeout(() => {
+            copyButton.textContent = 'Copy to Clipboard';
+          }, 2000);
+        })
+        .catch(error => {
+          console.error('Failed to copy sequence to clipboard:', error);
+        });
+    }
+
+    // Visualize the number
+    async function visualizeNumber(n) {
+      // window.alert("hello world");
+      const code = document.getElementById('code');
+      const output = document.getElementById('output');
+      const status = document.getElementById('status');
+      const curr = document.getElementById('currentNumberHolder');
+
+      output.innerHTML = ''; // Clear previous output
+      status.innerHTML = '';
+      curr.innerHTML = '';
+
+      // const currentNumber = document.createElement('p');
+      // currentNumber.textContent = n;
+      // output.appendChild(currentNumber);
+  
+      const lines = code.innerText.split('\n').map(line => line.trim());
+      let lineNumber = 1;
+      let numberOfIterations = 0; 
+      let numbers = []; 
+
+
+      while (n > 1 && !stop && numberOfIterations < 10 ) {
+
+        if(numberOfIterations === 0) {
+          const currentNumber = document.createElement('p');
+          currentNumber.textContent = n;
+          output.appendChild(currentNumber);
+
+          await new Promise(resolve => setTimeout(resolve, 1000)); // Delay for visualization          
+          numbers.push(n);
+        }
+
+        // curr.innerHTML('Current Number: '  + n); 
+
+        if (n % 2 === 0) {
+          n /= 2;
+          lineNumber = 3;
+        } else {
+          n = 3 * n + 3;
+          lineNumber = 5;
+        }
+
+        const lineToHighlight = lines[lineNumber - 1];
+        code.innerHTML = code.innerHTML.replace(lineToHighlight, `<span class="highlight">${lineToHighlight}</span>`);
+
+        // Display the current value of n
+        const currentNumber = document.createElement('p');
+        currentNumber.textContent = n;
+        output.appendChild(currentNumber);
+
+        await new Promise(resolve => setTimeout(resolve, 1000)); // Delay for visualization
+
+        code.innerHTML = code.innerHTML.replace(`<span class="highlight">${lineToHighlight}</span>`, lineToHighlight);
+        lineNumber = lineNumber === lines.length ? 1 : lineNumber + 1;
+
+        // Scroll to the end of the sequence
+        output.scrollLeft = output.scrollWidth;
+        if(numbers.findIndex((x) => x === n) !== -1) {
+          stop = true;
+          status.innerHTML = (n + ' has been found earlier, So our function will never stop!');
+          break;
+        }
+        numbers.push(n);
+        numberOfIterations++;
+      }
+
+      if(n === 1) {
+        status.innerHTML = ('Our function stops!');
+      }
+
+      if(numberOfIterations === 10) {
+        status.innerHTML = ('Our function exceeded 10 iterations, hence it will never stop!<br \>(We can prove that if our function stops, it will never take more than 10 iterations)');
+      }
+      console.log(numbers);
+      return numbers;
+    }
+
+    // Start the visualization
+    function startVisualization() {
+      stop = false; // Reset the stop flag
+      const inputNumber = document.getElementById('inputNumber');
+      var n = parseInt(inputNumber.value);
+      // inputN = n;
+      n = Math.min(n, 100);
+      visualizeNumber(n) // Perform visualization
+        .then(sequence => {
+          const copyButton = document.getElementById('copyButton');
+          copyButton.disabled = false; // Enable the copy button after the visualization is complete
+          copyButton.dataset.sequence = sequence.join(' '); // Store the sequence in the data attribute
+        });
+    }
+
+    // Stop the visualization
+    function stopVisualization() {
+      stop = true; // Set the stop flag to halt the visualization
+    }
+  </script>
+</body>
+</html>
